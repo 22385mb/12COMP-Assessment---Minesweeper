@@ -11,7 +11,11 @@ const SCREENWIDTH = 600;
 const SCREENHEIGHT = 700;
 const TILESIZE = 37.5;
 // Total number of tiles in the 16 by 16 grid
-const TILENUM = 256; 
+const TILENUM = 256;
+const MINESNUM = 40;
+
+var tiles;
+var mines;
 
 /******************************************************/
 // setup()
@@ -19,8 +23,10 @@ const TILENUM = 256;
 function setup() {
     console.log("setup: ");
     cnv = new Canvas(SCREENWIDTH, SCREENHEIGHT);
-    //Creates the tile sprites
+    tiles = new Group();
+    mines = new Group();
     createSprites();
+    assignMines();
 }
 
 /******************************************************/
@@ -41,7 +47,7 @@ function createSprites() {
     var rowCounter = 0;
     
     //Loop to spawn all tiles
-    for(var i=0; i < TILENUM; i++) {
+    for(var i = 0; i < TILENUM; i++) {
         /*If the row is not filled then the next spawned tile will
         spawn to the right of the previous tile. If the row is filled
         then the next tile will move up and go back to the start 
@@ -56,10 +62,24 @@ function createSprites() {
             tileYPos -= TILESIZE;
             tileXPos = 0 + TILESIZE/2;
         }
-        // Create a tile sprite
+
         tile = new Sprite(tileXPos, tileYPos, TILESIZE, TILESIZE, 'n');
         tile.color = "lightgreen";
+        tiles.add(tile);
         // Log that another tile has been added to the row
         rowCounter += 1;
+    }
+}
+
+function assignMines() {
+    var randNum;
+    // Loops 40 times to create 40 marked tiles
+    for (var i = 0; i < MINESNUM; i++) {
+        // Picks a random sprite from the tiles group
+        randTile = tiles[Math.round(random(0, tiles.length))];
+        // adds random tile to mines and removes from tiles
+        mines.add(randTile);
+        tiles.remove(randTile);
+        mines.color = "red";
     }
 }
