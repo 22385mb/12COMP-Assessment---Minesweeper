@@ -34,6 +34,8 @@ function setup() {
 /******************************************************/
 function draw() {
     background("lightgrey");
+    checkTileClicked();
+
 }
 
 /******************************************************/
@@ -63,7 +65,7 @@ function createSprites() {
             tileXPos = 0 + TILESIZE/2;
         }
 
-        tile = new Sprite(tileXPos, tileYPos, TILESIZE, TILESIZE, 'n');
+        tile = new Sprite(tileXPos, tileYPos, TILESIZE, TILESIZE, 's');
         tile.color = "lightgreen";
         tiles.add(tile);
         // Log that another tile has been added to the row
@@ -76,10 +78,22 @@ function assignMines() {
     // Loops 40 times to create 40 marked tiles
     for (var i = 0; i < MINESNUM; i++) {
         // Picks a random sprite from the tiles group
-        randTile = tiles[Math.round(random(0, tiles.length))];
+        randTile = tiles[Math.round(random(0, tiles.length - 1))];
         // adds random tile to mines and removes from tiles
         mines.add(randTile);
         tiles.remove(randTile);
         mines.color = "red";
+    }
+}
+
+function checkTileClicked() {
+    if(mouseIsPressed == true) {
+        // Goes through each tile and checks if the mouse is over it
+        for(var i = 0; i < tiles.length; i++) {
+            if(tiles[i].mouse.hovering()) {
+                // Depending which tile the mouse is over it gets "uncovered"
+                tiles[i].color = "brown";
+            }
+        }
     }
 }
