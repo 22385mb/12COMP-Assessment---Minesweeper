@@ -15,7 +15,9 @@ const TILENUM = 256;
 const MINESNUM = 40;
 
 var tiles;
+var uncovered;
 var mines;
+var uncoveredTiles = 0;
 
 /******************************************************/
 // setup()
@@ -25,6 +27,7 @@ function setup() {
     cnv = new Canvas(SCREENWIDTH, SCREENHEIGHT);
     tiles = new Group();
     mines = new Group();
+    uncovered = new Group();
     createSprites();
     assignMines();
 }
@@ -35,6 +38,11 @@ function setup() {
 function draw() {
     background("lightgrey");
     checkTileClicked();
+    text(uncovered.length + "/ 216", 500, 30);
+    //if all safe tiles are uncovered you win
+    if(uncovered.length == 216) {
+        console.log("You win!");
+    }
 
 }
 
@@ -87,13 +95,28 @@ function assignMines() {
 }
 
 function checkTileClicked() {
+    //This vraible is used to prevent loop running if a tile has already been found
+    var clickedTileFound = false;
+    
     if(mouseIsPressed == true) {
-        // Goes through each tile and checks if the mouse is over it
-        for(var i = 0; i < tiles.length; i++) {
-            if(tiles[i].mouse.hovering()) {
-                // Depending which tile the mouse is over it gets "uncovered"
-                tiles[i].color = "brown";
+        //checks if the mosue is over a tile in the mines group
+        if(mines.mouse.hovering()) {
+            console.log("You died!");
+            clickedTileFound = true;
+        }
+        if(!clickedTileFound) {
+            // Goes through each tile and checks if the mouse is over it
+            for(var i = 0; i < tiles.length; i++) {
+                if(tiles[i].mouse.hovering()) {
+                    // Depending which tile the mouse is over it gets "uncovered"
+                    tiles[i].color = "brown";
+                    //adds the tile to a new group and removes it from the old
+                    uncovered.add(tiles[i]);
+                    tiles.remove(tiles[i]);
+                    break;
+                }
             }
         }
     }
 }
+
