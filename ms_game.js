@@ -18,10 +18,15 @@ var tiles;
 var uncovered;
 var mines;
 var uncoveredTiles = 0;
+var timeSec = 0;
+var timeMin = 0;
+
+var timerInterval;
 
 /******************************************************/
 // setup()
 /******************************************************/
+// Sets up the program
 function setup() {
     console.log("setup: ");
     cnv = new Canvas(SCREENWIDTH, SCREENHEIGHT);
@@ -30,25 +35,31 @@ function setup() {
     uncovered = new Group();
     createSprites();
     assignMines();
+    timerInterval = setInterval(timer, 1000);
+    
+    textSize(40);
+    
 }
 
 /******************************************************/
 // draw()
 /******************************************************/
+// Runs 60 times a second
 function draw() {
     background("lightgrey");
     checkTileClicked();
-    text(uncovered.length + "/ 216", 500, 30);
+    text(timeMin + ":" + timeSec, 100, 60);
+    text(uncovered.length + "/ 216", SCREENHEIGHT - 300, 60);
     //if all safe tiles are uncovered you win
     if(uncovered.length == 216) {
-        console.log("You win!");
+        console.log("You won in " + timeMin + ":" + timeSec);
     }
-
 }
 
 /******************************************************/
 // FUNCTIONS
 /******************************************************/
+// Creates the tiles
 function createSprites() {
     //Variables which denote where the sprite should be placed
     var tileXPos = 0 + TILESIZE/2;
@@ -81,6 +92,7 @@ function createSprites() {
     }
 }
 
+// Assign some of the tiles to be mines
 function assignMines() {
     var randNum;
     // Loops 40 times to create 40 marked tiles
@@ -90,10 +102,11 @@ function assignMines() {
         // adds random tile to mines and removes from tiles
         mines.add(randTile);
         tiles.remove(randTile);
-        mines.color = "red";
+        //mines.color = "red";
     }
 }
 
+// Checks if and what tile has been clicked
 function checkTileClicked() {
     //This vraible is used to prevent loop running if a tile has already been found
     var clickedTileFound = false;
@@ -101,8 +114,7 @@ function checkTileClicked() {
     if(mouseIsPressed == true) {
         //checks if the mosue is over a tile in the mines group
         if(mines.mouse.hovering()) {
-            console.log("You died!");
-            clickedTileFound = true;
+            mineClicked();
         }
         if(!clickedTileFound) {
             // Goes through each tile and checks if the mouse is over it
@@ -120,3 +132,18 @@ function checkTileClicked() {
     }
 }
 
+// What happens if a mine is clicked
+function mineClicked() {
+    console.log("Your score was " + uncovered.length + "/ 216");
+    mines.color = "red";
+    clickedTileFound = true;
+    clearInterval(timerInterval);
+}
+
+function timer() {
+    timeSec += 1;
+    if(timeSec == 60) {
+        timeMin += 1;
+        timeSec = 0;
+    }
+}
