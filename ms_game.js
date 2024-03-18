@@ -10,18 +10,27 @@ console.log("%c Mine Sweeper Type Game", "color: blue;");
 const SCREENWIDTH = 600;
 const SCREENHEIGHT = 700;
 const TILESIZE = 37.5;
+const BUTTONHEIGHT = 75;
+const BUTTONWIDTH = 175;
 // Total number of tiles in the 16 by 16 grid
 const TILENUM = 256;
 const MINESNUM = 40;
 
+// Groups
 var tiles;
 var uncovered;
 var mines;
-var uncoveredTiles = 0;
+// Sprite groups for each screen
+var startSprites;
+var gamesprites;
+var endSprites;
+var instructionSprites;
+
 var timeSec = 0;
 var timeMin = 0;
-
 var timerInterval;
+var screenSelector = "start";
+var scoreMessage;
 
 /******************************************************/
 // setup()
@@ -30,12 +39,19 @@ var timerInterval;
 function setup() {
     console.log("setup: ");
     cnv = new Canvas(SCREENWIDTH, SCREENHEIGHT);
+    //Creating the groups
     tiles = new Group();
     mines = new Group();
+    startSprites = new Group();
+    gameSprites = new Group();
+    endSprites = new Group();
+    instructionSprites = new Group();
     uncovered = new Group();
-    createSprites();
+    
+    createButtons();
+    createTileSprites();
     assignMines();
-    timerInterval = setInterval(timer, 1000);
+    
     
     textSize(40);
     
@@ -46,21 +62,103 @@ function setup() {
 /******************************************************/
 // Runs 60 times a second
 function draw() {
+    if(screenSelector == "start") {
+        startScreen();
+    } 
+    else if(screenSelector == "game") {
+        gameScreen();
+    }
+    else if(screenSelector == "end") {
+        endScreen();
+    }
+    else if(screenSelector == "instructions") {
+        instructionScreen();
+    } else {
+        text("SOMETHING WENT WRONG!", 10, 50);
+        text("Please Reload or contact help", 10, 100);
+    }
+    
+}
+
+/******************************************************/
+// FUNCTIONS
+/******************************************************/
+// GAME SCREENS
+function startScreen() {
+    startSprites.visible = true;
+    gameSprites.visible = false;
+    endSprites.visible = false;
+    instructionSprites.visible = false;
+    background("#41980a");
+    
+    if(startButton.mouse.presses()) {
+        screenSelector = "game";
+        timerInterval = setInterval(timer, 1000);
+    }
+    else if(instructionsButton.mouse.presses()) {
+        screenSelector = "instructions"
+    }
+}
+
+function gameScreen() {
+    startSprites.visible = false;
+    gameSprites.visible = true;
+    endSprites.visible = false;
     background("lightgrey");
     checkTileClicked();
     text(timeMin + ":" + timeSec, 100, 60);
     text(uncovered.length + "/ 216", SCREENHEIGHT - 300, 60);
     //if all safe tiles are uncovered you win
     if(uncovered.length == 216) {
-        console.log("You won in " + timeMin + ":" + timeSec);
+        screenSelector = "end"
+        scoreMessage = "You won in a time of " + timeMin + ":" + timeSec;
     }
 }
 
-/******************************************************/
-// FUNCTIONS
-/******************************************************/
+function endScreen() {
+    gameSprites.visible = false;
+    endSprites.visible = true;
+    background("tomato");
+    text(scoreMessage, 0, SCREENHEIGHT/2);
+    if(replayButton.mouse.presses()) {
+        console.log("Reload to replay!");
+    }
+}
+
+function instructionScreen() {
+    startSprites.visible = false;
+    gameSprites.visible = false;
+    instructionSprites.visible = true;
+    background("lightblue");
+    
+    if(backButton.mouse.presses()) {
+        screenSelector = "start";
+    }
+}
+
+
+function createButtons() {
+    startButton = new Sprite(SCREENWIDTH/2, (SCREENHEIGHT/3) * 2, BUTTONWIDTH, BUTTONHEIGHT, 's')
+    startButton.color = "blue";
+    startSprites.add(startButton);
+    
+    instructionsButton = new Sprite(SCREENWIDTH/2, (SCREENHEIGHT/3) * 2 + BUTTONHEIGHT, BUTTONWIDTH-25, BUTTONHEIGHT-25, 's')
+    instructionsButton.color = "lightblue";
+    startSprites.add(instructionsButton);
+    
+    backButton = new Sprite((SCREENWIDTH/6) * 5, (SCREENHEIGHT/6) * 5 + BUTTONHEIGHT, BUTTONWIDTH-25, BUTTONHEIGHT-25, 's')
+    backButton.color = "green";
+    instructionSprites.add(backButton);
+    
+    replayButton = new Sprite(SCREENWIDTH/2, (SCREENHEIGHT/3) * 2 + BUTTONHEIGHT, BUTTONWIDTH-25, BUTTONHEIGHT-25, 's')
+    replayButton.color = "red";
+    endSprites.add(replayButton);
+    
+}
+
+
 // Creates the tiles
-function createSprites() {
+function createTileSprites() {
     //Variables which denote where the sprite should be placed
     var tileXPos = 0 + TILESIZE/2;
     var tileYPos = SCREENHEIGHT - TILESIZE/2;
@@ -87,6 +185,7 @@ function createSprites() {
         tile = new Sprite(tileXPos, tileYPos, TILESIZE, TILESIZE, 's');
         tile.color = "lightgreen";
         tiles.add(tile);
+        gameSprites.add(tile);
         // Log that another tile has been added to the row
         rowCounter += 1;
     }
@@ -102,7 +201,7 @@ function assignMines() {
         // adds random tile to mines and removes from tiles
         mines.add(randTile);
         tiles.remove(randTile);
-        //mines.color = "red";
+        mines.color = "red";
     }
 }
 
@@ -111,22 +210,20 @@ function checkTileClicked() {
     //This vraible is used to prevent loop running if a tile has already been found
     var clickedTileFound = false;
     
-    if(mouseIsPressed == true) {
-        //checks if the mosue is over a tile in the mines group
-        if(mines.mouse.hovering()) {
-            mineClicked();
-        }
-        if(!clickedTileFound) {
-            // Goes through each tile and checks if the mouse is over it
-            for(var i = 0; i < tiles.length; i++) {
-                if(tiles[i].mouse.hovering()) {
-                    // Depending which tile the mouse is over it gets "uncovered"
-                    tiles[i].color = "brown";
-                    //adds the tile to a new group and removes it from the old
-                    uncovered.add(tiles[i]);
-                    tiles.remove(tiles[i]);
-                    break;
-                }
+    //Check if mine clicked
+    if(mines.mouse.presses()) {
+        mineClicked();
+    }
+    if(!clickedTileFound) {
+        // Goes through each tile and checks if the mouse clicks it
+        for(var i = 0; i < tiles.length; i++) {
+            if(tiles[i].mouse.presses()) {
+                // Depending which tile the mouse is over it gets "uncovered"
+                tiles[i].color = "brown";
+                //adds the tile to a new group and removes it from the old
+                uncovered.add(tiles[i]);
+                tiles.remove(tiles[i]);
+                break;
             }
         }
     }
@@ -134,10 +231,11 @@ function checkTileClicked() {
 
 // What happens if a mine is clicked
 function mineClicked() {
-    console.log("Your score was " + uncovered.length + "/ 216");
     mines.color = "red";
     clickedTileFound = true;
+    scoreMessage = "You uncovered " + uncovered.length + "/ 216 tiles."
     clearInterval(timerInterval);
+    screenSelector = "end";
 }
 
 function timer() {
