@@ -48,10 +48,10 @@ function setup() {
     instructionSprites = new Group();
     uncovered = new Group();
     
+    
     createButtons();
     createTileSprites();
     assignMines();
-    
     
     textSize(40);
     
@@ -84,47 +84,58 @@ function draw() {
 // FUNCTIONS
 /******************************************************/
 // GAME SCREENS
+//Start Screen
 function startScreen() {
+    // Top of every screen function controls which sprites dispaly
     startSprites.visible = true;
     gameSprites.visible = false;
     endSprites.visible = false;
     instructionSprites.visible = false;
     background("#41980a");
     
+    //If Buttons pressed
     if(startButton.mouse.presses()) {
         screenSelector = "game";
         timerInterval = setInterval(timer, 1000);
     }
     else if(instructionsButton.mouse.presses()) {
-        screenSelector = "instructions"
+        screenSelector = "instructions";
     }
+    checkTileClicked();
 }
-
+//Game screen
 function gameScreen() {
     startSprites.visible = false;
     gameSprites.visible = true;
     endSprites.visible = false;
     background("lightgrey");
     checkTileClicked();
+    // Displaying changing score
     text(timeMin + ":" + timeSec, 100, 60);
     text(uncovered.length + "/ 216", SCREENHEIGHT - 300, 60);
+    
     //if all safe tiles are uncovered you win
     if(uncovered.length == 216) {
-        screenSelector = "end"
+        screenSelector = "end";
         scoreMessage = "You won in a time of " + timeMin + ":" + timeSec;
     }
 }
-
+//End screen
 function endScreen() {
+    gameSprites.removeAll();
+    startSprites.visible = false;
     gameSprites.visible = false;
     endSprites.visible = true;
     background("tomato");
     text(scoreMessage, 0, SCREENHEIGHT/2);
-    if(replayButton.mouse.presses()) {
-        console.log("Reload to replay!");
+    if(restartButton.mouse.presses()) {
+        console.log("restart button clicked");
+    }
+    else if(startButton.mouse.presses()) {
+        console.log("Start Clicked");
     }
 }
-
+//Instructions screen
 function instructionScreen() {
     startSprites.visible = false;
     gameSprites.visible = false;
@@ -132,28 +143,41 @@ function instructionScreen() {
     background("lightblue");
     
     if(backButton.mouse.presses()) {
-        screenSelector = "start";
+        screenSelector = "start";        
+        console.log(backButton.mouse.presses());
+
     }
 }
 
+function restart() {
+    var timeSec = 0;
+    var timeMin = 0;
+    createTileSprites();
+    assignMines();
+    screenSelector = "game";
+}
 
+// Creates the buttons that allow for movement between screens
 function createButtons() {
-    startButton = new Sprite(SCREENWIDTH/2, (SCREENHEIGHT/3) * 2, BUTTONWIDTH, BUTTONHEIGHT, 's')
+    startButton = new Sprite(SCREENWIDTH/2, (SCREENHEIGHT/3) * 2, BUTTONWIDTH, BUTTONHEIGHT, 's');
     startButton.color = "blue";
+    startButton.text = "START";
     startSprites.add(startButton);
     
-    instructionsButton = new Sprite(SCREENWIDTH/2, (SCREENHEIGHT/3) * 2 + BUTTONHEIGHT, BUTTONWIDTH-25, BUTTONHEIGHT-25, 's')
+    instructionsButton = new Sprite(SCREENWIDTH/2, (SCREENHEIGHT/3) * 2 + BUTTONHEIGHT, BUTTONWIDTH-25, BUTTONHEIGHT-25, 's');
     instructionsButton.color = "lightblue";
+    instructionsButton.text = "INSTRUCTIONS";
     startSprites.add(instructionsButton);
     
-    backButton = new Sprite((SCREENWIDTH/6) * 5, (SCREENHEIGHT/6) * 5 + BUTTONHEIGHT, BUTTONWIDTH-25, BUTTONHEIGHT-25, 's')
+    backButton = new Sprite((SCREENWIDTH/6) * 5, (SCREENHEIGHT/6) * 5 + BUTTONHEIGHT, BUTTONWIDTH-25, BUTTONHEIGHT-25, 's');
     backButton.color = "green";
+    backButton.text = "BACK";
     instructionSprites.add(backButton);
     
-    replayButton = new Sprite(SCREENWIDTH/2, (SCREENHEIGHT/3) * 2 + BUTTONHEIGHT, BUTTONWIDTH-25, BUTTONHEIGHT-25, 's')
-    replayButton.color = "red";
-    endSprites.add(replayButton);
-    
+    restartButton = new Sprite(SCREENWIDTH/2, (SCREENHEIGHT/3) * 2 + BUTTONHEIGHT, BUTTONWIDTH-25, BUTTONHEIGHT-25, 's');
+    restartButton.color = "red";
+    restartButton.text = "RESTART";
+    endSprites.add(restartButton);
 }
 
 
@@ -223,6 +247,7 @@ function checkTileClicked() {
                 //adds the tile to a new group and removes it from the old
                 uncovered.add(tiles[i]);
                 tiles.remove(tiles[i]);
+                console.log("Tile was clicked");
                 break;
             }
         }
@@ -233,7 +258,7 @@ function checkTileClicked() {
 function mineClicked() {
     mines.color = "red";
     clickedTileFound = true;
-    scoreMessage = "You uncovered " + uncovered.length + "/ 216 tiles."
+    scoreMessage = "You uncovered " + uncovered.length + "/ 216 tiles.";
     clearInterval(timerInterval);
     screenSelector = "end";
 }
