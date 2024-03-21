@@ -48,13 +48,9 @@ function setup() {
     instructionSprites = new Group();
     uncovered = new Group();
     
-    
     createButtons();
-    createTileSprites();
-    assignMines();
     
     textSize(40);
-    
 }
 
 /******************************************************/
@@ -77,7 +73,6 @@ function draw() {
         text("SOMETHING WENT WRONG!", 10, 50);
         text("Please Reload or contact help", 10, 100);
     }
-    
 }
 
 /******************************************************/
@@ -96,12 +91,11 @@ function startScreen() {
     //If Buttons pressed
     if(startButton.mouse.presses()) {
         screenSelector = "game";
-        timerInterval = setInterval(timer, 1000);
+        restart();
     }
     else if(instructionsButton.mouse.presses()) {
         screenSelector = "instructions";
     }
-    checkTileClicked();
 }
 //Game screen
 function gameScreen() {
@@ -129,10 +123,7 @@ function endScreen() {
     background("tomato");
     text(scoreMessage, 0, SCREENHEIGHT/2);
     if(restartButton.mouse.presses()) {
-        console.log("restart button clicked");
-    }
-    else if(startButton.mouse.presses()) {
-        console.log("Start Clicked");
+        restart();
     }
 }
 //Instructions screen
@@ -144,16 +135,15 @@ function instructionScreen() {
     
     if(backButton.mouse.presses()) {
         screenSelector = "start";        
-        console.log(backButton.mouse.presses());
-
     }
 }
 
 function restart() {
-    var timeSec = 0;
-    var timeMin = 0;
+    timeSec = 0;
+    timeMin = 0;
     createTileSprites();
     assignMines();
+    timerInterval = setInterval(timer, 1000);
     screenSelector = "game";
 }
 
