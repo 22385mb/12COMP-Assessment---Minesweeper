@@ -31,6 +31,7 @@ var timeMin = 0;
 var timerInterval;
 var screenSelector = "start";
 var scoreMessage;
+var minesAround = 0;
 
 /******************************************************/
 // setup()
@@ -49,7 +50,6 @@ function setup() {
     uncovered = new Group();
     
     createButtons();
-    
     textSize(40);
 }
 
@@ -63,6 +63,7 @@ function draw() {
     } 
     else if(screenSelector == "game") {
         gameScreen();
+        
     }
     else if(screenSelector == "end") {
         endScreen();
@@ -107,7 +108,10 @@ function gameScreen() {
     // Displaying changing score
     text(timeMin + ":" + timeSec, 100, 60);
     text(uncovered.length + "/ 216", SCREENHEIGHT - 300, 60);
-    
+    //for(var i = 0; i < tiles.length; i++) {
+        //checkMinesAround(tiles[i]);
+        //minesAround = 0;
+    //}
     //if all safe tiles are uncovered you win
     if(uncovered.length == 216) {
         screenSelector = "end";
@@ -141,6 +145,7 @@ function instructionScreen() {
 function restart() {
     timeSec = 0;
     timeMin = 0;
+    minesAround = 0;
     createTileSprites();
     assignMines();
     timerInterval = setInterval(timer, 1000);
@@ -178,6 +183,7 @@ function createTileSprites() {
     var tileYPos = SCREENHEIGHT - TILESIZE/2;
     // Logs how many tiles are in the current row
     var rowCounter = 0;
+    var lineCounter = 0;
     
     //Loop to spawn all tiles
     for(var i = 0; i < TILENUM; i++) {
@@ -191,17 +197,27 @@ function createTileSprites() {
         } else if(rowCounter == 16) {
             // Start new row so rowCounter set back to 0
             rowCounter = 0;
+            lineCounter += 1;
             //Y spawn move up. X spawn reverts to original
             tileYPos -= TILESIZE;
+            console.log("tileYPos = " + tileYPos);
             tileXPos = 0 + TILESIZE/2;
         }
 
         tile = new Sprite(tileXPos, tileYPos, TILESIZE, TILESIZE, 's');
         tile.color = "lightgreen";
         tiles.add(tile);
+        tile.columnNum = rowCounter;
+        tile.rowNum = lineCounter;
         gameSprites.add(tile);
         // Log that another tile has been added to the row
         rowCounter += 1;
+    }
+    for(var j = 0; j < tiles.length; j++) {
+        console.log(j + " x = " + tiles[j].x);
+        console.log("columnNum " + tiles[j].columnNum);
+        console.log("rowNum " + tiles[j].rowNum);
+        console.log(j + " y = " + tiles[j].y);
     }
 }
 
@@ -215,7 +231,7 @@ function assignMines() {
         // adds random tile to mines and removes from tiles
         mines.add(randTile);
         tiles.remove(randTile);
-        mines.color = "red";
+        //mines.color = "red";
     }
 }
 
@@ -234,10 +250,11 @@ function checkTileClicked() {
             if(tiles[i].mouse.presses()) {
                 // Depending which tile the mouse is over it gets "uncovered"
                 tiles[i].color = "brown";
+                checkMinesAround(tiles[i]);
+                minesAround = 0;
                 //adds the tile to a new group and removes it from the old
                 uncovered.add(tiles[i]);
                 tiles.remove(tiles[i]);
-                console.log("Tile was clicked");
                 break;
             }
         }
@@ -253,6 +270,44 @@ function mineClicked() {
     screenSelector = "end";
 }
 
+function flagTile(_targetTile) {
+    console.log("Flag placed");
+    flag = new Sprite(_targetTile.x, _targetTile.y, TILESIZE, TILESIZE, 's');
+}
+
+/*When the player clicks on a  tile, that tile is passed into checkMinesAround(_tile)
+The function then goes through each mine in the mine group
+For each mine it takes the current mine being looked at, mines[i] and passes it into
+the function checkIfMineAdjacent. It also passes in the tile that was clicked and 
+where to look for the mine*/
+function checkMinesAround(_tile) {
+    for(var i = 0; i < mines.length; i++) {
+        checkIfMineAdjacent(mines[i], _tile, 1, 0);
+        checkIfMineAdjacent(mines[i], _tile, 1, -1);
+        checkIfMineAdjacent(mines[i], _tile, 0, -1);
+        checkIfMineAdjacent(mines[i], _tile, -1, -1);
+        checkIfMineAdjacent(mines[i], _tile, -1, 0);
+        checkIfMineAdjacent(mines[i], _tile, -1, 1);
+        checkIfMineAdjacent(mines[i], _tile, 0, 1);
+        checkIfMineAdjacent(mines[i], _tile, 1, 1);
+    }
+    //after going through all the mines the number of mines around the tile is logged
+    _tile.text = minesAround;
+    //The variable containitng the number of mines around is reset.
+    //minesAround = 0;
+}
+
+//This function checks if a mine is at a speciifc location from a specific tile
+/*_mine is the mine being looked at, _tile is the tile that it is being checked in relation too
+_addx is the distnace on the x axis from the tile that we are checking if the mine is
+-yadd is the same but for the y axis.*/
+function checkIfMineAdjacent(_mine, _tile, _addX, _addY) {
+    if(_mine.columnNum == _tile.columnNum + _addX && _mine.rowNum == _tile.rowNum + _addY) {
+        minesAround += 1;
+    }
+}
+
+// function which runs every second and controls the insturctions for the timer of the game
 function timer() {
     timeSec += 1;
     if(timeSec == 60) {
