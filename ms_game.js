@@ -20,6 +20,7 @@ const MINESNUM = 40;
 var tiles;
 var uncovered;
 var mines;
+var flags;
 // Sprite groups for each screen
 var startSprites;
 var gamesprites;
@@ -48,6 +49,7 @@ function setup() {
     endSprites = new Group();
     instructionSprites = new Group();
     uncovered = new Group();
+    flags = new Group();
     
     createButtons();
     textSize(40);
@@ -104,14 +106,10 @@ function gameScreen() {
     gameSprites.visible = true;
     endSprites.visible = false;
     background("lightgrey");
-    checkTileClicked();
+
     // Displaying changing score
     text(timeMin + ":" + timeSec, 100, 60);
     text(uncovered.length + "/ 216", SCREENHEIGHT - 300, 60);
-    //for(var i = 0; i < tiles.length; i++) {
-        //checkMinesAround(tiles[i]);
-        //minesAround = 0;
-    //}
     //if all safe tiles are uncovered you win
     if(uncovered.length == 216) {
         screenSelector = "end";
@@ -200,24 +198,18 @@ function createTileSprites() {
             lineCounter += 1;
             //Y spawn move up. X spawn reverts to original
             tileYPos -= TILESIZE;
-            console.log("tileYPos = " + tileYPos);
             tileXPos = 0 + TILESIZE/2;
         }
 
         tile = new Sprite(tileXPos, tileYPos, TILESIZE, TILESIZE, 's');
         tile.color = "lightgreen";
-        tiles.add(tile);
         tile.columnNum = rowCounter;
         tile.rowNum = lineCounter;
+        tile.flagged = false;
+        tiles.add(tile);
         gameSprites.add(tile);
         // Log that another tile has been added to the row
         rowCounter += 1;
-    }
-    for(var j = 0; j < tiles.length; j++) {
-        console.log(j + " x = " + tiles[j].x);
-        console.log("columnNum " + tiles[j].columnNum);
-        console.log("rowNum " + tiles[j].rowNum);
-        console.log(j + " y = " + tiles[j].y);
     }
 }
 
@@ -231,7 +223,32 @@ function assignMines() {
         // adds random tile to mines and removes from tiles
         mines.add(randTile);
         tiles.remove(randTile);
-        //mines.color = "red";
+    }
+}
+
+//Built in function that runs when the mouse is pressed
+function mousePressed() {
+    //only runs code if screen is game to prevent unnecessary running.
+    if(screenSelector == "game") {
+        if(mouseButton == LEFT) {
+            checkTileClicked();
+        }
+        else if(mouseButton == RIGHT) {
+            //Checks mines to see if they were right clicked
+            for(var j = 0; j < mines.length; j++) {
+                if(mines[j].mouse.hovering()) {
+                    flagTile(mines[j]);
+                    break;
+                } 
+            }
+            //checks tiles to see if they were right clicked
+            for(var i = 0; i < tiles.length; i++) {
+                if(tiles[i].mouse.hovering()) {
+                    flagTile(tiles[i]);
+                    break;
+                }       
+            }
+        }
     }
 }
 
@@ -239,23 +256,28 @@ function assignMines() {
 function checkTileClicked() {
     //This vraible is used to prevent loop running if a tile has already been found
     var clickedTileFound = false;
-    
     //Check if mine clicked
-    if(mines.mouse.presses()) {
-        mineClicked();
+    for(var j = 0; j < mines.length; j++) {
+        if(!mines[j].flagged) {
+            if(mines[j].mouse.presses()) {
+                mineClicked();
+            }
+        }
     }
     if(!clickedTileFound) {
         // Goes through each tile and checks if the mouse clicks it
         for(var i = 0; i < tiles.length; i++) {
-            if(tiles[i].mouse.presses()) {
-                // Depending which tile the mouse is over it gets "uncovered"
-                tiles[i].color = "brown";
-                checkMinesAround(tiles[i]);
-                minesAround = 0;
-                //adds the tile to a new group and removes it from the old
-                uncovered.add(tiles[i]);
-                tiles.remove(tiles[i]);
-                break;
+            if(!tiles[i].flagged) {
+                if(tiles[i].mouse.presses()) {
+                    // Depending which tile the mouse is over it gets "uncovered"
+                    tiles[i].color = "brown";
+                    checkMinesAround(tiles[i]);
+                    minesAround = 0;
+                    //adds the tile to a new group and removes it from the old
+                    uncovered.add(tiles[i]);
+                    tiles.remove(tiles[i]);
+                    break;
+                }
             }
         }
     }
@@ -264,15 +286,28 @@ function checkTileClicked() {
 // What happens if a mine is clicked
 function mineClicked() {
     mines.color = "red";
+    flags.removeAll();
     clickedTileFound = true;
     scoreMessage = "You uncovered " + uncovered.length + "/ 216 tiles.";
     clearInterval(timerInterval);
     screenSelector = "end";
 }
 
-function flagTile(_targetTile) {
-    console.log("Flag placed");
-    flag = new Sprite(_targetTile.x, _targetTile.y, TILESIZE, TILESIZE, 's');
+
+function flagTile(_tile) {
+    if(_tile.flagged == true) {
+        _tile.flagged = false;
+        for(var i = 0; i < flags.length; i++) {
+            if(flags[i].x == _tile.x && flags[i].y == _tile.y) {
+                flags[i].remove();
+                break;
+            }
+        }
+    } else {
+        flag = new Sprite(_tile.x, _tile.y, TILESIZE-20, TILESIZE-20, 's');
+        flags.add(flag);
+        _tile.flagged = true;
+    }
 }
 
 /*When the player clicks on a  tile, that tile is passed into checkMinesAround(_tile)
