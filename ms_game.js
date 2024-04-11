@@ -23,7 +23,7 @@ const MINESNUM = 40;
 var tiles; //Group for tiles
 var uncovered; //Group for safe tiles which have been clicked
 var mines; //Group for the mines
-var flags; //G5roup for markers player creates with right click
+var flags; //Group for markers player creates with right click
 
 // Sprite groups for each screen
 var startSprites;
@@ -42,6 +42,22 @@ achived. It holds if they lost and the number of tile left and if
 they won and in what time. It then combines this into one variable
 that will be passed to a databse and handled there*/
 var score = [[], []];
+
+
+function preload() {
+  console.log("preload: ");
+  startImg = loadImage('Assets/StartScreen.png');
+  instructionsImg = loadImage('Assets/InstructionsScreen.png');
+  tileImg = loadImage('Assets/Tile.png');
+  roseImg = loadImage('Assets/RoseTile.png');
+  uncovered0 = loadImage('Assets/Uncovered0.png');
+  uncovered1 = loadImage('Assets/Uncovered1.png');
+  uncovered2 = loadImage('Assets/Uncovered2.png');
+  uncovered3 = loadImage('Assets/Uncovered3.png');
+  uncovered4 = loadImage('Assets/Uncovered4.png');
+  uncovered5 = loadImage('Assets/Uncovered5.png');
+  uncovered6 = loadImage('Assets/Uncovered6.png');
+}
 
 /******************************************************/
 // setup()
@@ -100,7 +116,7 @@ function startScreen() {
     gameSprites.visible = false;
     endSprites.visible = false;
     instructionSprites.visible = false;
-    background("#41980a");
+    background(startImg);
     
     //If Buttons pressed
     if(startButton.mouse.presses()) {
@@ -121,7 +137,7 @@ function gameScreen() {
 
     // Displaying changing score
     text(timeMin + ":" + timeSec, 100, 60);
-    text(uncovered.length + "/ 216", SCREENHEIGHT - 300, 60);
+    text(uncovered.length + "/ 216", SCREENWIDTH - 200, 60);
     //if all safe tiles are uncovered you win
     if(uncovered.length == SAFETILESNUM) {
         screenSelector = "end";
@@ -144,7 +160,7 @@ function endScreen() {
     //Display end message
     text(scoreMessage, 0, SCREENHEIGHT/2);
     
-    //Buytton retsarts game
+    //Button restarts game
     if(restartButton.mouse.presses()) {
         restart();
     }
@@ -154,7 +170,7 @@ function instructionScreen() {
     startSprites.visible = false;
     gameSprites.visible = false;
     instructionSprites.visible = true;
-    background("lightblue");
+    background(instructionsImg);
     //Button to go back
     if(backButton.mouse.presses()) {
         screenSelector = "start";        
@@ -174,12 +190,12 @@ function restart() {
 
 // Creates the buttons that allow for movement between screens
 function createButtons() {
-    startButton = new Sprite(SCREENWIDTH/2, (SCREENHEIGHT/3) * 2, BUTTONWIDTH, BUTTONHEIGHT, 's');
+    startButton = new Sprite(SCREENWIDTH/2, (SCREENHEIGHT/6) * 5, BUTTONWIDTH, BUTTONHEIGHT, 's');
     startButton.color = "blue";
     startButton.text = "START";
     startSprites.add(startButton);
     
-    instructionsButton = new Sprite(SCREENWIDTH/2, (SCREENHEIGHT/3) * 2 + BUTTONHEIGHT, BUTTONWIDTH-25, BUTTONHEIGHT-25, 's');
+    instructionsButton = new Sprite(SCREENWIDTH/2, (SCREENHEIGHT/6) * 5 + BUTTONHEIGHT, BUTTONWIDTH-25, BUTTONHEIGHT-25, 's');
     instructionsButton.color = "lightblue";
     instructionsButton.text = "INSTRUCTIONS";
     startSprites.add(instructionsButton);
@@ -224,7 +240,7 @@ function createTileSprites() {
         }
         //Creating the sprite and assigning to groups
         tile = new Sprite(tileXPos, tileYPos, TILESIZE, TILESIZE, 's');
-        tile.color = "lightgreen";
+        tile.addImage("tile", tileImg);
         tile.columnNum = rowCounter;
         tile.rowNum = lineCounter;
         tile.flagged = false;
@@ -240,8 +256,8 @@ function assignMines() {
     var randTile;
     // Loops 40 times to create 40 marked tiles
     for (var i = 0; i < MINESNUM; i++) {
-        // Picks a random sprite from the tiles group
-        randTile = tiles[Math.round(random(0, tiles.length))];
+        // Picks a random sprite from the tiles group\
+        randTile = tiles[Math.round(random(0, tiles.length-1))];
         // adds random tile to mines and removes from tiles
         mines.add(randTile);
         tiles.remove(randTile);
@@ -325,17 +341,11 @@ function flagTile(_tile) {
     //If tile is already flagged then the flag is removed
     if(_tile.flagged == true) {
         _tile.flagged = false;
-        for(var i = 0; i < flags.length; i++) {
-            if(flags[i].x == _tile.x && flags[i].y == _tile.y) {
-                flags[i].remove();
-                break;
-            }
-        }
+        _tile.addImage(tileImg);
     } else {
         //flag is created to mark a tile
-        flag = new Sprite(_tile.x, _tile.y, TILESIZE-20, TILESIZE-20, 's');
-        flags.add(flag);
         _tile.flagged = true;
+        _tile.addImage(roseImg);
     }
 }
 
@@ -356,7 +366,7 @@ function checkMinesAround(_tile) {
         checkIfMineAdjacent(mines[i], _tile, 1, 1);
     }
     //after going through all the mines the number of mines around the tile is displayed
-    _tile.text = minesAround;
+    _tile.addImage('Assets/Uncovered' + minesAround + ".png");
 }
 
 //This function checks if a mine is at a speciifc location from a specific tile
