@@ -1,9 +1,9 @@
 /*******************************************************/
-// Mine Sweeper Type Game
+// Diggin' With Dug
+// A Minesweeper Type Game
 // Written by Miles Baldwin
 /*******************************************************/
-console.log("%c Mine Sweeper Type Game", "color: blue;");
-
+console.log("%c Diggin' With Dug - A Game", "color: blue;");
 /******************************************************/
 // VARIABLES AND CONSTANTS
 /******************************************************/
@@ -23,40 +23,42 @@ const MINESNUM = 40;
 var tiles; //Group for tiles
 var uncovered; //Group for safe tiles which have been clicked
 var mines; //Group for the mines
-var flags; //Group for markers player creates with right click
 
-// Sprite groups for each screen
+// Sprite groups for each screen - used for the hding of sprites at different screens
 var startSprites;
 var gamesprites;
 var endSprites;
 var instructionSprites;
 
+// Timer varibales
 var timeSec = 0;
 var timeMin = 0;
 var timerInterval;
+
 var screenSelector = "start";
 var scoreMessage;
 var minesAround = 0;
-/*Score holds an array that logs the specifics of what the player 
-achived. It holds if they lost and the number of tile left and if 
-they won and in what time. It then combines this into one variable
-that will be passed to a databse and handled there*/
-var score = [[], []];
 
+//Score holds how many tiles were left to be uncovered
+var score;
+//Score 2 holds time taken
+var score2;
 
+//Function loads the images before the game runs
 function preload() {
-  console.log("preload: ");
-  startImg = loadImage('Assets/StartScreen.png');
-  instructionsImg = loadImage('Assets/InstructionsScreen.png');
-  tileImg = loadImage('Assets/Tile.png');
-  roseImg = loadImage('Assets/RoseTile.png');
-  uncovered0 = loadImage('Assets/Uncovered0.png');
-  uncovered1 = loadImage('Assets/Uncovered1.png');
-  uncovered2 = loadImage('Assets/Uncovered2.png');
-  uncovered3 = loadImage('Assets/Uncovered3.png');
-  uncovered4 = loadImage('Assets/Uncovered4.png');
-  uncovered5 = loadImage('Assets/Uncovered5.png');
-  uncovered6 = loadImage('Assets/Uncovered6.png');
+  startImg = loadImage('Assets/start_screen.png');
+  instructionsImg = loadImage('Assets/instructions_screen.png');
+  endGood = loadImage('Assets/end_screen_good.png');
+  endBad = loadImage('Assets/end_screen_bad.png');
+  tileImg = loadImage('Assets/tile.png');
+  roseImg = loadImage('Assets/rose_tile.png');
+  uncovered0 = loadImage('Assets/uncovered0.png');
+  uncovered1 = loadImage('Assets/uncovered1.png');
+  uncovered2 = loadImage('Assets/uncovered2.png');
+  uncovered3 = loadImage('Assets/uncovered3.png');
+  uncovered4 = loadImage('Assets/uncovered4.png');
+  uncovered5 = loadImage('Assets/uncovered5.png');
+  uncovered6 = loadImage('Assets/uncovered6.png');
 }
 
 /******************************************************/
@@ -64,7 +66,6 @@ function preload() {
 /******************************************************/
 // Sets up the program
 function setup() {
-    console.log("setup: ");
     cnv = new Canvas(SCREENWIDTH, SCREENHEIGHT);
     //Creating the groups
     tiles = new Group();
@@ -74,11 +75,9 @@ function setup() {
     endSprites = new Group();
     instructionSprites = new Group();
     uncovered = new Group();
-    flags = new Group();
-    
-    //Set up the buttons for functionality
+    //Set up the buttons
+    textSize(17);
     createButtons();
-    textSize(40);
 }
 
 /******************************************************/
@@ -86,13 +85,14 @@ function setup() {
 /******************************************************/
 // Runs 60 times a second
 function draw() {
+    //Set text to an appropriate size
+    textSize(40)
     //Game screen logic
     if(screenSelector == "start") {
         startScreen();
     } 
     else if(screenSelector == "game") {
         gameScreen();
-        
     }
     else if(screenSelector == "end") {
         endScreen();
@@ -104,7 +104,6 @@ function draw() {
         text("Please Reload or contact help", 10, 100);
     }
 }
-
 /******************************************************/
 // FUNCTIONS
 /******************************************************/
@@ -119,17 +118,18 @@ function startScreen() {
     background(startImg);
     
     //If Buttons pressed
-    if(startButton.mouse.presses()) {
+    if(startButton.mouse.presses()) { //Start Button Pressed
         screenSelector = "game";
         restart();
     }
-    else if(instructionsButton.mouse.presses()) {
+    else if(instructionsButton.mouse.presses()) { //Instructions Button Pressed
         screenSelector = "instructions";
     }
 }
 //Game screen
 function gameScreen() {
-    var totalTime;
+    var totalTime; //Used for final score
+    
     startSprites.visible = false;
     gameSprites.visible = true;
     endSprites.visible = false;
@@ -143,22 +143,28 @@ function gameScreen() {
         screenSelector = "end";
         //Convert minutes to seconds(X by 60) and add to the seconds to get toal time
         totalTime = (timeMin * 60) + timeSec;
-        score = [[false, (SAFETILESNUM - uncovered.length)], [true, totalTime]];
+        score = totalTime;
         scoreMessage = "You won in a time of " + timeMin + ":" + timeSec;
     }
 }
-
 //End screen
 function endScreen() {
+    //Deletes tiles
     gameSprites.removeAll();
-    flags.removeAll();
     startSprites.visible = false;
     gameSprites.visible = false;
     endSprites.visible = true;
-    background("tomato");
+    //If player wins and gets a score(score doesn't equal 0) good end screen displayed
+    if(score != 0) {
+        background(endGood);
+    } else {
+        background(endBad);
+    }
     
+    var textW = textWidth(scoreMessage);
     //Display end message
-    text(scoreMessage, 0, SCREENHEIGHT/2);
+    textSize(40); //Chosen because this creates a nice size for all end messages
+    text(scoreMessage, SCREENWIDTH - textW - 10, SCREENHEIGHT/2);
     
     //Button restarts game
     if(restartButton.mouse.presses()) {
@@ -171,41 +177,49 @@ function instructionScreen() {
     gameSprites.visible = false;
     instructionSprites.visible = true;
     background(instructionsImg);
-    //Button to go back
+    
+    //Button to go back to start screen
     if(backButton.mouse.presses()) {
         screenSelector = "start";        
     }
 }
 
-//Restart the game by resetting variables and recreating tiles and mines
+//Restarts the game by resetting variables and recreating tiles and mines
 function restart() {
+    //Reset Timer and score
     timeSec = 0;
     timeMin = 0;
     minesAround = 0;
+    score = 0;
+    //Create tiles, assign mines and start up timer
     createTileSprites();
     assignMines();
     timerInterval = setInterval(timer, 1000);
     screenSelector = "game";
 }
 
-// Creates the buttons that allow for movement between screens
+//Creates the buttons that allow for movement between screens
 function createButtons() {
+    //Start Button - Start Screen
     startButton = new Sprite(SCREENWIDTH/2, (SCREENHEIGHT/6) * 5, BUTTONWIDTH, BUTTONHEIGHT, 's');
     startButton.color = "blue";
     startButton.text = "START";
     startSprites.add(startButton);
     
+    //Instructions Button - Start Screen
     instructionsButton = new Sprite(SCREENWIDTH/2, (SCREENHEIGHT/6) * 5 + BUTTONHEIGHT, BUTTONWIDTH-25, BUTTONHEIGHT-25, 's');
     instructionsButton.color = "lightblue";
     instructionsButton.text = "INSTRUCTIONS";
     startSprites.add(instructionsButton);
     
+    //Back Button - Instructions Screen
     backButton = new Sprite((SCREENWIDTH/6) * 5, (SCREENHEIGHT/6) * 5 + BUTTONHEIGHT, BUTTONWIDTH-25, BUTTONHEIGHT-25, 's');
     backButton.color = "green";
     backButton.text = "BACK";
     instructionSprites.add(backButton);
     
-    restartButton = new Sprite(SCREENWIDTH/2, (SCREENHEIGHT/3) * 2 + BUTTONHEIGHT, BUTTONWIDTH-25, BUTTONHEIGHT-25, 's');
+    //Restart Button - End Screen
+    restartButton = new Sprite(SCREENWIDTH/2, (SCREENHEIGHT/4) * 3 + BUTTONHEIGHT, BUTTONWIDTH, BUTTONHEIGHT, 's');
     restartButton.color = "red";
     restartButton.text = "RESTART";
     endSprites.add(restartButton);
@@ -230,7 +244,8 @@ function createTileSprites() {
         are filled*/
         if(rowCounter > 0 && rowCounter < 16) {//16 is the number of tiles that fit in a row
             tileXPos += TILESIZE;
-        } else if(rowCounter == 16) {
+        } 
+        else if(rowCounter == 16) {
             // Start new row so rowCounter set back to 0
             rowCounter = 0;
             lineCounter += 1;
@@ -241,6 +256,7 @@ function createTileSprites() {
         //Creating the sprite and assigning to groups
         tile = new Sprite(tileXPos, tileYPos, TILESIZE, TILESIZE, 's');
         tile.addImage("tile", tileImg);
+        //Add grid position to the sprite
         tile.columnNum = rowCounter;
         tile.rowNum = lineCounter;
         tile.flagged = false;
@@ -329,9 +345,9 @@ function checkTileClicked() {
 // What happens if a mine is clicked
 function mineClicked() {
     clickedTileFound = true;
-    totalTime = (timeMin * 60) + timeSec;
-    score = [[true, (SAFETILESNUM - uncovered.length)], [false, totalTime]];
-    scoreMessage = "You had " + score[0][1] + " tiles left to uncover.";
+    //Player didn't win so cannot have a score
+    score = 0;
+    scoreMessage = "You had " + (SAFETILESNUM - uncovered.length) + " tiles left to uncover.";
     clearInterval(timerInterval);
     screenSelector = "end";
 }
@@ -366,7 +382,7 @@ function checkMinesAround(_tile) {
         checkIfMineAdjacent(mines[i], _tile, 1, 1);
     }
     //after going through all the mines the number of mines around the tile is displayed
-    _tile.addImage('Assets/Uncovered' + minesAround + ".png");
+    _tile.addImage('Assets/uncovered' + minesAround + ".png");
 }
 
 //This function checks if a mine is at a speciifc location from a specific tile
